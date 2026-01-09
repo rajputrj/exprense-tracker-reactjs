@@ -2,12 +2,11 @@ import { useMemo } from 'react';
 import { TrendingUp, DollarSign, Users } from 'lucide-react';
 import PerPersonSummary from './PerPersonSummary';
 import SpendingTrend from './SpendingTrend';
-import { TOTAL_PEOPLE } from '../constants/people';
 
-function Summary({ expenses }) {
+function Summary({ expenses, numberOfPeople = 8 }) {
   const summaryData = useMemo(() => {
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-    const perPersonAmount = totalExpenses / TOTAL_PEOPLE;
+    const perPersonAmount = totalExpenses / numberOfPeople;
     const expenseCount = expenses.length;
     const averagePerExpense = expenseCount > 0 ? totalExpenses / expenseCount : 0;
 
@@ -47,7 +46,7 @@ function Summary({ expenses }) {
             </div>
           </div>
           <p className="text-3xl font-bold text-gray-800 mb-2">₹{summaryData.perPersonAmount.toFixed(2)}</p>
-          <p className="text-sm text-gray-500">Split among {TOTAL_PEOPLE} people</p>
+          <p className="text-sm text-gray-500">Split among {numberOfPeople} people</p>
         </div>
       </div>
 
@@ -61,7 +60,7 @@ function Summary({ expenses }) {
       </div>
 
       {/* Per Person Summary */}
-      <PerPersonSummary expenses={expenses} />
+      <PerPersonSummary expenses={expenses} numberOfPeople={numberOfPeople} />
     </div>
   );
 }

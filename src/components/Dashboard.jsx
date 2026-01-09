@@ -2,9 +2,8 @@ import { useState, useMemo } from 'react';
 import { DollarSign, Wallet, TrendingUp, Trash2 } from 'lucide-react';
 import SpendingTrend from './SpendingTrend';
 import PerPersonSummary from './PerPersonSummary';
-import { TOTAL_PEOPLE } from '../constants/people';
 
-function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense }) {
+function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense, numberOfPeople = 8 }) {
   const metrics = useMemo(() => {
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const averageSpend = expenses.length > 0 ? totalExpenses / expenses.length : 0;
@@ -100,7 +99,7 @@ function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense }) {
                 </thead>
                 <tbody>
                   {expenses.slice().reverse().map((expense) => {
-                    const perPersonAmount = expense.amount / TOTAL_PEOPLE;
+                    const perPersonAmount = expense.amount / numberOfPeople;
                     return (
                       <tr key={expense.id} className="border-b hover:bg-gray-50 transition-colors duration-200 animate-fadeIn">
                         <td className="py-3 px-4 text-gray-700">{formatDate(expense.date)}</td>
@@ -146,7 +145,7 @@ function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense }) {
 
       {/* Per Person Summary */}
       <div className="mt-6">
-        <PerPersonSummary expenses={expenses} />
+        <PerPersonSummary expenses={expenses} numberOfPeople={numberOfPeople} />
       </div>
     </div>
   );

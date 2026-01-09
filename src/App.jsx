@@ -4,11 +4,13 @@ import Summary from './components/Summary';
 import Profile from './components/Profile';
 import Header from './components/Header';
 import AddExpenseModal from './components/AddExpenseModal';
+import SettingsModal from './components/SettingsModal';
 import BottomNav from './components/BottomNav';
 import Login from './components/Login';
 import Toast from './components/Toast';
 import Loader from './components/Loader';
 import { getExpenses, createExpense, deleteExpense } from './services/api';
+import { getNumberOfPeople } from './services/settings';
 
 const AUTH_KEY = 'isAuthenticated';
 const AUTH_TIMESTAMP_KEY = 'authTimestamp';
@@ -23,6 +25,8 @@ function App() {
   const [deletingExpense, setDeletingExpense] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [toast, setToast] = useState(null);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [numberOfPeople, setNumberOfPeople] = useState(8);
 
   // Secure authentication check
   const checkAuthentication = () => {
@@ -46,6 +50,10 @@ function App() {
   };
 
   useEffect(() => {
+    // Load settings
+    const peopleCount = getNumberOfPeople();
+    setNumberOfPeople(peopleCount);
+
     // Check authentication on mount
     if (checkAuthentication()) {
       setIsAuthenticated(true);
@@ -112,6 +120,11 @@ function App() {
     setToast({ message, type });
   };
 
+  const handleSettingsSave = (newNumberOfPeople) => {
+    setNumberOfPeople(newNumberOfPeople);
+    showToast(`Settings saved! Expenses will now split among ${newNumberOfPeople} people.`, 'success');
+  };
+
   const handleAddExpense = async (expenseData) => {
     try {
       setAddingExpense(true);
@@ -169,19 +182,24 @@ function App() {
               loading={loading}
               onDeleteExpense={handleDeleteExpense}
               deletingExpense={deletingExpense}
+              numberOfPeople={numberOfPeople}
             />
           </div>
         );
       case 'summary':
         return (
           <div className="animate-fadeIn">
-            <Summary expenses={expenses} />
+            <Summary expenses={expenses} numberOfPeople={numberOfPeople} />
           </div>
         );
       case 'profile':
         return (
           <div className="animate-fadeIn">
-            <Profile onLogout={handleLogout} />
+            <Profile 
+              onLogout={handleLogout} 
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              numberOfPeople={numberOfPeople}
+            />
           </div>
         );
       default:
@@ -192,6 +210,7 @@ function App() {
               loading={loading}
               onDeleteExpense={handleDeleteExpense}
               deletingExpense={deletingExpense}
+              numberOfPeople={numberOfPeople}
             />
           </div>
         );
@@ -202,7 +221,6 @@ function App() {
   return (
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
       <Header 
-        onAddExpenseClick={() => setIsModalOpen(true)}
         onLogout={handleLogout}
       />
       <div className="container mx-auto px-4 py-8">
@@ -221,6 +239,13 @@ function App() {
           onClose={() => setIsModalOpen(false)}
           onSave={handleAddExpense}
           isSubmitting={addingExpense}
+        />
+      )}
+
+      {isSettingsOpen && (
+        <SettingsModal
+          onClose={() => setIsSettingsOpen(false)}
+          onSave={handleSettingsSave}
         />
       )}
       

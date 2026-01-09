@@ -1,10 +1,10 @@
-import { Clock, LogOut, Plus } from 'lucide-react';
+import { Clock, LogOut } from 'lucide-react';
 
-function Header({ onAddExpenseClick, onLogout }) {
+function Header({ onLogout }) {
   return (
     <header className="bg-white shadow-sm border-b">
       <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
               <Clock className="w-6 h-6 text-white" />
@@ -17,15 +17,6 @@ function Header({ onAddExpenseClick, onLogout }) {
             title="Logout"
           >
             <LogOut className="w-5 h-5 text-gray-600" />
-          </button>
-        </div>
-        <div className="flex justify-end">
-          <button
-            onClick={onAddExpenseClick}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-          >
-            <Plus className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" />
-            Add Expense
           </button>
         </div>
       </div>

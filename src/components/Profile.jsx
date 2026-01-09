@@ -1,6 +1,6 @@
-import { User, LogOut, Shield, Clock } from 'lucide-react';
+import { User, LogOut, Shield, Clock, Settings } from 'lucide-react';
 
-function Profile({ onLogout }) {
+function Profile({ onLogout, onOpenSettings, numberOfPeople = 8 }) {
   return (
     <div className="animate-fadeIn">
       <div className="mb-8 animate-slideIn">
@@ -37,7 +37,26 @@ function Profile({ onLogout }) {
                 <p className="font-semibold text-gray-800">Active (24 hours)</p>
               </div>
             </div>
+            <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+              <User className="w-5 h-5 text-purple-600" />
+              <div>
+                <p className="text-sm text-gray-600">Bill Splitting</p>
+                <p className="font-semibold text-gray-800">{numberOfPeople} people</p>
+              </div>
+            </div>
           </div>
+        </div>
+
+        {/* Settings Card */}
+        <div className="bg-white rounded-lg shadow-sm p-6 mb-6 animate-fadeIn" style={{ animationDelay: '150ms' }}>
+          <h3 className="text-lg font-semibold text-gray-800 mb-4">Settings</h3>
+          <button
+            onClick={onOpenSettings}
+            className="w-full flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+          >
+            <Settings className="w-5 h-5" />
+            Configure Bill Splitting
+          </button>
         </div>
 
         {/* Actions Card */}
