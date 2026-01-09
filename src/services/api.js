@@ -1,5 +1,6 @@
 import axios from 'axios';
 
+
 // Use environment variable if set, otherwise use relative URL for same-origin or localhost for dev
 const API_URL = import.meta.env.VITE_API_URL || 
   (import.meta.env.PROD ? '/api' : 'https://exprense-tracker-nodejs.onrender.com/api');
