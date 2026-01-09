@@ -4,7 +4,7 @@ import SpendingTrend from './SpendingTrend';
 import PerPersonSummary from './PerPersonSummary';
 import { TOTAL_PEOPLE } from '../constants/people';
 
-function Dashboard({ expenses, loading, onDeleteExpense }) {
+function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense }) {
   const metrics = useMemo(() => {
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const averageSpend = expenses.length > 0 ? totalExpenses / expenses.length : 0;
@@ -113,13 +113,20 @@ function Dashboard({ expenses, loading, onDeleteExpense }) {
                           </span>
                         </td>
                         <td className="py-3 px-4">
-                          <button
-                            onClick={() => onDeleteExpense(expense.id)}
-                            className="text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-110 active:scale-95"
-                            title="Delete expense"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                          {deletingExpense === expense.id ? (
+                            <div className="flex items-center justify-center">
+                              <div className="spinner w-4 h-4"></div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => onDeleteExpense(expense.id)}
+                              className="text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-110 active:scale-95"
+                              title="Delete expense"
+                              disabled={deletingExpense !== null}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     );

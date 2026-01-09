@@ -7,6 +7,7 @@ import AddExpenseModal from './components/AddExpenseModal';
 import BottomNav from './components/BottomNav';
 import Login from './components/Login';
 import Toast from './components/Toast';
+import Loader from './components/Loader';
 import { getExpenses, createExpense, deleteExpense } from './services/api';
 
 const AUTH_KEY = 'isAuthenticated';
@@ -18,6 +19,8 @@ function App() {
   const [expenses, setExpenses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [addingExpense, setAddingExpense] = useState(false);
+  const [deletingExpense, setDeletingExpense] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [toast, setToast] = useState(null);
 
@@ -111,6 +114,7 @@ function App() {
 
   const handleAddExpense = async (expenseData) => {
     try {
+      setAddingExpense(true);
       const newExpense = await createExpense(expenseData);
       setExpenses([...expenses, newExpense]);
       setIsModalOpen(false);
@@ -118,17 +122,22 @@ function App() {
     } catch (error) {
       console.error('Failed to add expense:', error);
       showToast('Failed to add expense. Please try again.', 'error');
+    } finally {
+      setAddingExpense(false);
     }
   };
 
   const handleDeleteExpense = async (id) => {
     try {
+      setDeletingExpense(id);
       await deleteExpense(id);
       setExpenses(expenses.filter(exp => exp.id !== id));
       showToast('Expense deleted successfully!', 'success');
     } catch (error) {
       console.error('Failed to delete expense:', error);
       showToast('Failed to delete expense. Please try again.', 'error');
+    } finally {
+      setDeletingExpense(null);
     }
   };
 
@@ -146,8 +155,7 @@ function App() {
     if (loading) {
       return (
         <div className="flex flex-col items-center justify-center h-64 animate-fadeIn">
-          <div className="spinner mb-4"></div>
-          <div className="text-gray-500 animate-pulse-slow">Loading expenses...</div>
+          <Loader size="lg" text="Loading expenses..." />
         </div>
       );
     }
@@ -160,6 +168,7 @@ function App() {
               expenses={expenses} 
               loading={loading}
               onDeleteExpense={handleDeleteExpense}
+              deletingExpense={deletingExpense}
             />
           </div>
         );
@@ -182,6 +191,7 @@ function App() {
               expenses={expenses} 
               loading={loading}
               onDeleteExpense={handleDeleteExpense}
+              deletingExpense={deletingExpense}
             />
           </div>
         );
@@ -210,6 +220,7 @@ function App() {
         <AddExpenseModal
           onClose={() => setIsModalOpen(false)}
           onSave={handleAddExpense}
+          isSubmitting={addingExpense}
         />
       )}
       

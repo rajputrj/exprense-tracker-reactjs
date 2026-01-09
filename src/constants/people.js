@@ -5,7 +5,8 @@ export const PEOPLE = [
   'Person 4',
   'Person 5',
   'Person 6',
-  'Person 7'
+  'Person 7',
+  'Person 8'
 ];
 
 export const TOTAL_PEOPLE = PEOPLE.length;

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X } from 'lucide-react';
 
-function AddExpenseModal({ onClose, onSave }) {
+function AddExpenseModal({ onClose, onSave, isSubmitting = false }) {
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
@@ -109,9 +109,17 @@ function AddExpenseModal({ onClose, onSave }) {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+            disabled={isSubmitting}
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
           >
-            Save Expense
+            {isSubmitting ? (
+              <>
+                <div className="spinner w-5 h-5 border-2 border-white border-t-transparent"></div>
+                <span>Saving...</span>
+              </>
+            ) : (
+              'Save Expense'
+            )}
           </button>
         </form>
       </div>
