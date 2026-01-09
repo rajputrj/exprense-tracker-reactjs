@@ -1,41 +1,40 @@
 // Settings service for managing app configuration
-const SETTINGS_KEY = 'spendsmart_settings';
+// Now uses backend API instead of localStorage
+import { getNumberOfPersons as apiGetNumberOfPersons, updateNumberOfPersons as apiUpdateNumberOfPersons } from './api';
 
-const DEFAULT_SETTINGS = {
-  numberOfPeople: 8
-};
+const DEFAULT_NUMBER_OF_PEOPLE = 8;
 
-export const getSettings = () => {
+// Cache for number of persons (to avoid repeated API calls)
+let cachedNumberOfPeople = null;
+
+export const getNumberOfPeople = async () => {
   try {
-    const settings = localStorage.getItem(SETTINGS_KEY);
-    if (settings) {
-      return JSON.parse(settings);
+    if (cachedNumberOfPeople !== null) {
+      return cachedNumberOfPeople;
     }
-    return DEFAULT_SETTINGS;
+    const number = await apiGetNumberOfPersons();
+    cachedNumberOfPeople = number;
+    return number;
   } catch (error) {
-    console.error('Failed to load settings:', error);
-    return DEFAULT_SETTINGS;
+    console.error('Failed to load number of people from API:', error);
+    // Fallback to default if API fails
+    return DEFAULT_NUMBER_OF_PEOPLE;
   }
 };
 
-export const saveSettings = (settings) => {
+export const updateNumberOfPeople = async (number) => {
   try {
-    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    const result = await apiUpdateNumberOfPersons(number);
+    cachedNumberOfPeople = result.numberOfPersons;
     return true;
   } catch (error) {
-    console.error('Failed to save settings:', error);
+    console.error('Failed to save number of people:', error);
     return false;
   }
 };
 
-export const updateNumberOfPeople = (number) => {
-  const settings = getSettings();
-  settings.numberOfPeople = parseInt(number) || DEFAULT_SETTINGS.numberOfPeople;
-  return saveSettings(settings);
-};
-
-export const getNumberOfPeople = () => {
-  const settings = getSettings();
-  return settings.numberOfPeople || DEFAULT_SETTINGS.numberOfPeople;
+// Sync function for initial load (returns default, will be updated by async call)
+export const getNumberOfPeopleSync = () => {
+  return cachedNumberOfPeople || DEFAULT_NUMBER_OF_PEOPLE;
 };
 

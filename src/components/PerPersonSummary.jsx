@@ -1,10 +1,23 @@
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Users, DollarSign } from 'lucide-react';
+import { getUsers } from '../services/api';
 
-function PerPersonSummary({ expenses, numberOfPeople = 8 }) {
-  const peopleList = useMemo(() => {
-    return Array.from({ length: numberOfPeople }, (_, i) => `Person ${i + 1}`);
-  }, [numberOfPeople]);
+function PerPersonSummary({ expenses, numberOfPeople = 1 }) {
+  const [users, setUsers] = useState([]);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const usersData = await getUsers();
+        // Exclude superadmin from the list
+        const regularUsers = usersData.filter(user => user.role !== 'superadmin');
+        setUsers(regularUsers);
+      } catch (error) {
+        console.error('Failed to load users:', error);
+      }
+    };
+    loadUsers();
+  }, []);
 
   const perPersonData = useMemo(() => {
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -28,7 +41,7 @@ function PerPersonSummary({ expenses, numberOfPeople = 8 }) {
         <p className="text-sm text-gray-600 mb-1">Total Expenses</p>
         <p className="text-2xl font-bold text-blue-600">₹{perPersonData.totalExpenses.toFixed(2)}</p>
         <p className="text-xs text-gray-500 mt-1">
-          {perPersonData.expenseCount} expense{perPersonData.expenseCount !== 1 ? 's' : ''} split among {numberOfPeople} people
+          {perPersonData.expenseCount} expense{perPersonData.expenseCount !== 1 ? 's' : ''} split among {numberOfPeople} {numberOfPeople === 1 ? 'user' : 'users'}
         </p>
       </div>
 
@@ -45,35 +58,44 @@ function PerPersonSummary({ expenses, numberOfPeople = 8 }) {
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-gray-700 mb-3">Breakdown by Person:</p>
-        {peopleList.map((person, index) => (
-          <div
-            key={person}
-            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-all duration-200 hover-lift animate-fadeIn"
-            style={{ animationDelay: `${index * 50}ms` }}
-          >
-            <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${
-                index % 8 === 0 ? 'bg-blue-500' :
-                index % 8 === 1 ? 'bg-green-500' :
-                index % 8 === 2 ? 'bg-purple-500' :
-                index % 8 === 3 ? 'bg-yellow-500' :
-                index % 8 === 4 ? 'bg-pink-500' :
-                index % 8 === 5 ? 'bg-indigo-500' :
-                index % 8 === 6 ? 'bg-red-500' : 'bg-orange-500'
-              }`}></div>
-              <span className="font-medium text-gray-800">{person}</span>
+        <p className="text-sm font-semibold text-gray-700 mb-3">Breakdown by User:</p>
+        {users.length > 0 ? (
+          users.map((user, index) => (
+            <div
+              key={user.id}
+              className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-all duration-200 hover-lift animate-fadeIn"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
+              <div className="flex items-center gap-2">
+                <div className={`w-3 h-3 rounded-full ${
+                  index % 8 === 0 ? 'bg-blue-500' :
+                  index % 8 === 1 ? 'bg-green-500' :
+                  index % 8 === 2 ? 'bg-purple-500' :
+                  index % 8 === 3 ? 'bg-yellow-500' :
+                  index % 8 === 4 ? 'bg-pink-500' :
+                  index % 8 === 5 ? 'bg-indigo-500' :
+                  index % 8 === 6 ? 'bg-red-500' : 'bg-orange-500'
+                }`}></div>
+                <span className="font-medium text-gray-800">{user.name}</span>
+                {user.role === 'superadmin' && (
+                  <span className="text-xs px-2 py-0.5 bg-purple-100 text-purple-800 rounded-full">Admin</span>
+                )}
+              </div>
+              <span className="text-lg font-semibold text-gray-800">
+                ₹{perPersonData.perPersonAmount.toFixed(2)}
+              </span>
             </div>
-            <span className="text-lg font-semibold text-gray-800">
-              ₹{perPersonData.perPersonAmount.toFixed(2)}
-            </span>
+          ))
+        ) : (
+          <div className="text-center py-4 text-gray-500">
+            <p>No users found. Please create users first.</p>
           </div>
-        ))}
+        )}
       </div>
 
       <div className="mt-6 p-4 bg-gray-50 rounded-lg">
         <p className="text-xs text-gray-600 text-center">
-          All expenses are split equally among all {numberOfPeople} people
+          All expenses are split equally among all {numberOfPeople} {numberOfPeople === 1 ? 'user' : 'users'}
         </p>
       </div>
     </div>

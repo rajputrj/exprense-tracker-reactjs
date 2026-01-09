@@ -1,15 +1,27 @@
 import { useState, useEffect } from 'react';
 import { X, Users, Save } from 'lucide-react';
 import { getNumberOfPeople, updateNumberOfPeople } from '../services/settings';
+import Loader from './Loader';
 
 function SettingsModal({ onClose, onSave }) {
   const [numberOfPeople, setNumberOfPeople] = useState(8);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load current settings
-    const currentNumber = getNumberOfPeople();
-    setNumberOfPeople(currentNumber);
+    // Load current settings from backend
+    const loadSettings = async () => {
+      try {
+        setIsLoading(true);
+        const currentNumber = await getNumberOfPeople();
+        setNumberOfPeople(currentNumber);
+      } catch (error) {
+        console.error('Failed to load settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadSettings();
   }, []);
 
   const handleSubmit = async (e) => {
@@ -21,14 +33,19 @@ function SettingsModal({ onClose, onSave }) {
     }
 
     setIsSaving(true);
-    const success = updateNumberOfPeople(numberOfPeople);
-    setIsSaving(false);
-
-    if (success) {
-      onSave(numberOfPeople);
-      onClose();
-    } else {
+    try {
+      const success = await updateNumberOfPeople(numberOfPeople);
+      if (success) {
+        onSave(numberOfPeople);
+        onClose();
+      } else {
+        alert('Failed to save settings. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
       alert('Failed to save settings. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -52,11 +69,16 @@ function SettingsModal({ onClose, onSave }) {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit}>
-          <div className="mb-6">
-            <label htmlFor="numberOfPeople" className="block text-gray-700 font-medium mb-2">
-              Number of People for Bill Splitting
-            </label>
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <Loader size="md" text="Loading settings..." />
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            <div className="mb-6">
+              <label htmlFor="numberOfPeople" className="block text-gray-700 font-medium mb-2">
+                Number of People for Bill Splitting
+              </label>
             <input
               type="number"
               id="numberOfPeople"
@@ -105,6 +127,7 @@ function SettingsModal({ onClose, onSave }) {
             </button>
           </div>
         </form>
+        )}
       </div>
     </div>
   );

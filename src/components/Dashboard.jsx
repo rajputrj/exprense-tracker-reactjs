@@ -1,9 +1,29 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DollarSign, Wallet, TrendingUp, Trash2 } from 'lucide-react';
 import SpendingTrend from './SpendingTrend';
 import PerPersonSummary from './PerPersonSummary';
+import { getUsers } from '../services/api';
 
-function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense, numberOfPeople = 8 }) {
+function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense, numberOfPeople = 8, currentUser }) {
+  const [users, setUsers] = useState([]);
+  const [userMap, setUserMap] = useState({});
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const usersData = await getUsers();
+        setUsers(usersData);
+        const map = {};
+        usersData.forEach(user => {
+          map[user.id] = user;
+        });
+        setUserMap(map);
+      } catch (error) {
+        console.error('Failed to load users:', error);
+      }
+    };
+    loadUsers();
+  }, []);
   const metrics = useMemo(() => {
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
     const averageSpend = expenses.length > 0 ? totalExpenses / expenses.length : 0;
@@ -91,7 +111,7 @@ function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense, number
                   <tr className="border-b">
                     <th className="text-left py-3 px-4 text-gray-600 font-semibold">Date</th>
                     <th className="text-left py-3 px-4 text-gray-600 font-semibold">Title</th>
-                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Description</th>
+                    <th className="text-left py-3 px-4 text-gray-600 font-semibold">Created By</th>
                     <th className="text-left py-3 px-4 text-gray-600 font-semibold">Total Amount</th>
                     <th className="text-left py-3 px-4 text-gray-600 font-semibold">Per Person</th>
                     <th className="text-left py-3 px-4 text-gray-600 font-semibold">Actions</th>
@@ -104,7 +124,17 @@ function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense, number
                       <tr key={expense.id} className="border-b hover:bg-gray-50 transition-colors duration-200 animate-fadeIn">
                         <td className="py-3 px-4 text-gray-700">{formatDate(expense.date)}</td>
                         <td className="py-3 px-4 text-gray-800 font-medium">{expense.title}</td>
-                        <td className="py-3 px-4 text-gray-600">{expense.description || '-'}</td>
+                        <td className="py-3 px-4">
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                            expense.createdBy === currentUser?.id
+                              ? 'bg-blue-100 text-blue-800'
+                              : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {expense.createdBy === currentUser?.id 
+                              ? 'You' 
+                              : (userMap[expense.createdBy]?.name || 'Unknown')}
+                          </span>
+                        </td>
                         <td className="py-3 px-4 text-gray-800 font-semibold">₹{expense.amount.toFixed(2)}</td>
                         <td className="py-3 px-4">
                           <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 transition-all duration-200 hover:bg-green-200">
@@ -117,14 +147,18 @@ function Dashboard({ expenses, loading, onDeleteExpense, deletingExpense, number
                               <div className="spinner w-4 h-4"></div>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => onDeleteExpense(expense.id)}
-                              className="text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-110 active:scale-95"
-                              title="Delete expense"
-                              disabled={deletingExpense !== null}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
+                            (currentUser?.role === 'superadmin' || expense.createdBy === currentUser?.id) ? (
+                              <button
+                                onClick={() => onDeleteExpense(expense.id)}
+                                className="text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-110 active:scale-95"
+                                title="Delete expense"
+                                disabled={deletingExpense !== null}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            ) : (
+                              <span className="text-gray-400 text-xs">No access</span>
+                            )
                           )}
                         </td>
                       </tr>

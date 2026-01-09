@@ -3,10 +3,10 @@ import { TrendingUp, DollarSign, Users } from 'lucide-react';
 import PerPersonSummary from './PerPersonSummary';
 import SpendingTrend from './SpendingTrend';
 
-function Summary({ expenses, numberOfPeople = 8 }) {
+function Summary({ expenses, numberOfPeople = 1 }) {
   const summaryData = useMemo(() => {
     const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-    const perPersonAmount = totalExpenses / numberOfPeople;
+    const perPersonAmount = numberOfPeople > 0 ? totalExpenses / numberOfPeople : 0;
     const expenseCount = expenses.length;
     const averagePerExpense = expenseCount > 0 ? totalExpenses / expenseCount : 0;
 
@@ -46,7 +46,7 @@ function Summary({ expenses, numberOfPeople = 8 }) {
             </div>
           </div>
           <p className="text-3xl font-bold text-gray-800 mb-2">₹{summaryData.perPersonAmount.toFixed(2)}</p>
-          <p className="text-sm text-gray-500">Split among {numberOfPeople} people</p>
+          <p className="text-sm text-gray-500">Split among {numberOfPeople} {numberOfPeople === 1 ? 'user' : 'users'}</p>
         </div>
       </div>
 
@@ -61,6 +61,9 @@ function Summary({ expenses, numberOfPeople = 8 }) {
 
       {/* Per Person Summary */}
       <PerPersonSummary expenses={expenses} numberOfPeople={numberOfPeople} />
+      
+      {/* Divider for User Management Section */}
+      <div className="mt-8 pt-8 border-t border-gray-200"></div>
     </div>
   );
 }

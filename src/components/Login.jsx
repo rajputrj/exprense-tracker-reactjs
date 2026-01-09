@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import { LogIn, Clock } from 'lucide-react';
-
-const STATIC_USERNAME = 'ayodhya';
-const STATIC_PASSWORD = 'ayodhya';
+import { loginUser } from '../services/auth';
+import Loader from './Loader';
 
 function Login({ onLogin }) {
   const [formData, setFormData] = useState({
@@ -10,18 +9,25 @@ function Login({ onLogin }) {
     password: ''
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    if (formData.username === STATIC_USERNAME && formData.password === STATIC_PASSWORD) {
-      // Store login state in localStorage with timestamp for security
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('authTimestamp', Date.now().toString());
-      onLogin();
-    } else {
-      setError('Invalid username or password');
+    try {
+      const user = await loginUser(formData.username, formData.password);
+      if (user) {
+        onLogin(user);
+      } else {
+        setError('Invalid username or password');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Failed to login. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -42,7 +48,7 @@ function Login({ onLogin }) {
           <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center mb-4">
             <Clock className="w-10 h-10 text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 mb-2">SpendSmart</h1>
+          <h1 className="text-3xl font-bold text-gray-800 mb-2">TrackerFlow</h1>
           <p className="text-gray-600 text-sm">Expense Tracker</p>
         </div>
 
@@ -89,10 +95,20 @@ function Login({ onLogin }) {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
+            disabled={isLoading}
+            className="w-full bg-blue-500 hover:bg-blue-600 disabled:bg-blue-400 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
           >
-            <LogIn className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
-            Login
+            {isLoading ? (
+              <>
+                <div className="spinner w-5 h-5 border-2 border-white border-t-transparent"></div>
+                <span>Logging in...</span>
+              </>
+            ) : (
+              <>
+                <LogIn className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+                Login
+              </>
+            )}
           </button>
         </form>
 

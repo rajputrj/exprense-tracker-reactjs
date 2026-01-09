@@ -2,22 +2,20 @@ import { useState, useEffect } from 'react';
 import Dashboard from './components/Dashboard';
 import Summary from './components/Summary';
 import Profile from './components/Profile';
+import UserManagement from './components/UserManagement';
+import Settlements from './components/Settlements';
 import Header from './components/Header';
 import AddExpenseModal from './components/AddExpenseModal';
-import SettingsModal from './components/SettingsModal';
 import BottomNav from './components/BottomNav';
+import DesktopNav from './components/DesktopNav';
 import Login from './components/Login';
 import Toast from './components/Toast';
 import Loader from './components/Loader';
-import { getExpenses, createExpense, deleteExpense } from './services/api';
-import { getNumberOfPeople } from './services/settings';
-
-const AUTH_KEY = 'isAuthenticated';
-const AUTH_TIMESTAMP_KEY = 'authTimestamp';
-const SESSION_DURATION = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+import { getExpenses, createExpense, deleteExpense, getUsers } from './services/api';
+import { getCurrentUser, logout as authLogout, isSuperAdmin } from './services/auth';
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
   const [expenses, setExpenses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -25,57 +23,50 @@ function App() {
   const [deletingExpense, setDeletingExpense] = useState(null);
   const [activeTab, setActiveTab] = useState('dashboard');
   const [toast, setToast] = useState(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [numberOfPeople, setNumberOfPeople] = useState(8);
-
-  // Secure authentication check
-  const checkAuthentication = () => {
-    const authStatus = localStorage.getItem(AUTH_KEY);
-    const authTimestamp = localStorage.getItem(AUTH_TIMESTAMP_KEY);
-    
-    if (authStatus === 'true' && authTimestamp) {
-      const timestamp = parseInt(authTimestamp);
-      const now = Date.now();
-      // Check if session is still valid (within 24 hours)
-      if (now - timestamp < SESSION_DURATION) {
-        return true;
-      } else {
-        // Session expired, clear auth
-        localStorage.removeItem(AUTH_KEY);
-        localStorage.removeItem(AUTH_TIMESTAMP_KEY);
-        return false;
-      }
-    }
-    return false;
-  };
+  const [numberOfPeople, setNumberOfPeople] = useState(1);
 
   useEffect(() => {
-    // Load settings
-    const peopleCount = getNumberOfPeople();
-    setNumberOfPeople(peopleCount);
+    // Load user count from backend (excluding superadmin)
+    const loadUserCount = async () => {
+      try {
+        const users = await getUsers();
+        // Exclude superadmin from count
+        const regularUsers = users.filter(user => user.role !== 'superadmin');
+        setNumberOfPeople(regularUsers.length || 1);
+      } catch (error) {
+        console.error('Failed to load users:', error);
+        setNumberOfPeople(1); // Default fallback
+      }
+    };
+
+    loadUserCount();
 
     // Check authentication on mount
-    if (checkAuthentication()) {
-      setIsAuthenticated(true);
+    const user = getCurrentUser();
+    if (user) {
+      setCurrentUser(user);
       loadExpenses();
     } else {
-      setIsAuthenticated(false);
       setLoading(false);
     }
 
-    // Check authentication on window focus (prevents direct access attempts)
+    // Check authentication on window focus
     const handleFocus = () => {
-      if (!checkAuthentication()) {
-        setIsAuthenticated(false);
+      const user = getCurrentUser();
+      if (!user) {
+        setCurrentUser(null);
         setExpenses([]);
       }
     };
 
     // Check authentication on visibility change
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && !checkAuthentication()) {
-        setIsAuthenticated(false);
-        setExpenses([]);
+      if (document.visibilityState === 'visible') {
+        const user = getCurrentUser();
+        if (!user) {
+          setCurrentUser(null);
+          setExpenses([]);
+        }
       }
     };
 
@@ -88,19 +79,14 @@ function App() {
     };
   }, []);
 
-  const handleLogin = () => {
-    // Set authentication with timestamp
-    localStorage.setItem(AUTH_KEY, 'true');
-    localStorage.setItem(AUTH_TIMESTAMP_KEY, Date.now().toString());
-    setIsAuthenticated(true);
+  const handleLogin = (user) => {
+    setCurrentUser(user);
     loadExpenses();
   };
 
   const handleLogout = () => {
-    // Clear all authentication data
-    localStorage.removeItem(AUTH_KEY);
-    localStorage.removeItem(AUTH_TIMESTAMP_KEY);
-    setIsAuthenticated(false);
+    authLogout();
+    setCurrentUser(null);
     setExpenses([]);
   };
 
@@ -120,15 +106,28 @@ function App() {
     setToast({ message, type });
   };
 
-  const handleSettingsSave = (newNumberOfPeople) => {
-    setNumberOfPeople(newNumberOfPeople);
-    showToast(`Settings saved! Expenses will now split among ${newNumberOfPeople} people.`, 'success');
+  const handleUserCreated = async () => {
+    // Reload user count when a user is created or deleted (excluding superadmin)
+    try {
+      const users = await getUsers();
+      // Exclude superadmin from count
+      const regularUsers = users.filter(user => user.role !== 'superadmin');
+      const newCount = regularUsers.length || 1;
+      setNumberOfPeople(newCount);
+      // Reload expenses to reflect new calculations (and remove deleted user's expenses)
+      await loadExpenses();
+    } catch (error) {
+      console.error('Failed to reload user count:', error);
+    }
   };
 
   const handleAddExpense = async (expenseData) => {
     try {
       setAddingExpense(true);
-      const newExpense = await createExpense(expenseData);
+      const newExpense = await createExpense({
+        ...expenseData,
+        createdBy: currentUser.id
+      });
       setExpenses([...expenses, newExpense]);
       setIsModalOpen(false);
       showToast('Expense added successfully!', 'success');
@@ -143,19 +142,20 @@ function App() {
   const handleDeleteExpense = async (id) => {
     try {
       setDeletingExpense(id);
-      await deleteExpense(id);
+      await deleteExpense(id, currentUser.id, currentUser.role);
       setExpenses(expenses.filter(exp => exp.id !== id));
       showToast('Expense deleted successfully!', 'success');
     } catch (error) {
       console.error('Failed to delete expense:', error);
-      showToast('Failed to delete expense. Please try again.', 'error');
+      const errorMsg = error.response?.data?.error || 'Failed to delete expense. Please try again.';
+      showToast(errorMsg, 'error');
     } finally {
       setDeletingExpense(null);
     }
   };
 
   // Show login page if not authenticated - SECURE: No direct access allowed
-  if (!isAuthenticated) {
+  if (!currentUser) {
     // Clear any stale data when showing login
     if (expenses.length > 0) {
       setExpenses([]);
@@ -183,13 +183,39 @@ function App() {
               onDeleteExpense={handleDeleteExpense}
               deletingExpense={deletingExpense}
               numberOfPeople={numberOfPeople}
+              currentUser={currentUser}
             />
           </div>
         );
       case 'summary':
         return (
           <div className="animate-fadeIn">
-            <Summary expenses={expenses} numberOfPeople={numberOfPeople} />
+            <Summary 
+              expenses={expenses} 
+              numberOfPeople={numberOfPeople}
+              currentUser={currentUser}
+            />
+            {currentUser && currentUser.role === 'superadmin' ? (
+              <div className="mt-8 border-t-2 border-blue-200 pt-8">
+                <UserManagement onUserCreated={handleUserCreated} />
+              </div>
+            ) : (
+              currentUser && (
+                <div className="mt-8 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    <strong>Note:</strong> User Management is only available for Super Admin users. 
+                    You are currently logged in as: <strong>{currentUser.name}</strong> ({currentUser.role})
+                  </p>
+                </div>
+              )
+            )}
+            <div className="mt-8">
+              <Settlements 
+                expenses={expenses} 
+                numberOfPeople={numberOfPeople}
+                currentUserId={currentUser?.id}
+              />
+            </div>
           </div>
         );
       case 'profile':
@@ -197,7 +223,6 @@ function App() {
           <div className="animate-fadeIn">
             <Profile 
               onLogout={handleLogout} 
-              onOpenSettings={() => setIsSettingsOpen(true)}
               numberOfPeople={numberOfPeople}
             />
           </div>
@@ -222,8 +247,17 @@ function App() {
     <div className="min-h-screen bg-gray-50 pb-16 md:pb-0">
       <Header 
         onLogout={handleLogout}
+        currentUser={currentUser}
       />
-      <div className="container mx-auto px-4 py-8">
+      
+      {/* Desktop Navigation */}
+      <DesktopNav
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        onAddExpenseClick={() => setIsModalOpen(true)}
+      />
+      
+      <div className="container mx-auto px-4 py-4 md:py-8 max-w-7xl">
         {renderContent()}
       </div>
       
@@ -242,13 +276,6 @@ function App() {
         />
       )}
 
-      {isSettingsOpen && (
-        <SettingsModal
-          onClose={() => setIsSettingsOpen(false)}
-          onSave={handleSettingsSave}
-        />
-      )}
-      
       {/* Toast Notifications */}
       {toast && (
         <Toast
