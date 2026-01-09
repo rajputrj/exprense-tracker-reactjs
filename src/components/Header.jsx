@@ -26,13 +26,13 @@ function Header({ onAddExpenseClick, onLogout }) {
           </div>
         </div>
         <div className="flex justify-end">
-          <button
-            onClick={onAddExpenseClick}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-colors"
-          >
-            <Plus className="w-5 h-5" />
-            Add Expense
-          </button>
+            <button
+              onClick={onAddExpenseClick}
+              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+            >
+              <Plus className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" />
+              Add Expense
+            </button>
         </div>
       </div>
     </header>

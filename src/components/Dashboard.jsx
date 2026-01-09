@@ -43,8 +43,8 @@ function Dashboard({ expenses, loading, onDeleteExpense }) {
   }
 
   return (
-    <div>
-      <div className="mb-8">
+    <div className="animate-fadeIn">
+      <div className="mb-8 animate-slideIn">
         <h2 className="text-4xl font-bold text-gray-800 mb-2">Dashboard</h2>
         <p className="text-gray-600">Track, manage, and analyze your expenses efficiently.</p>
       </div>
@@ -102,20 +102,20 @@ function Dashboard({ expenses, loading, onDeleteExpense }) {
                   {expenses.slice().reverse().map((expense) => {
                     const perPersonAmount = expense.amount / TOTAL_PEOPLE;
                     return (
-                      <tr key={expense.id} className="border-b hover:bg-gray-50">
+                      <tr key={expense.id} className="border-b hover:bg-gray-50 transition-colors duration-200 animate-fadeIn">
                         <td className="py-3 px-4 text-gray-700">{formatDate(expense.date)}</td>
                         <td className="py-3 px-4 text-gray-800 font-medium">{expense.title}</td>
                         <td className="py-3 px-4 text-gray-600">{expense.description || '-'}</td>
                         <td className="py-3 px-4 text-gray-800 font-semibold">₹{expense.amount.toFixed(2)}</td>
                         <td className="py-3 px-4">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 transition-all duration-200 hover:bg-green-200">
                             ₹{perPersonAmount.toFixed(2)} each
                           </span>
                         </td>
                         <td className="py-3 px-4">
                           <button
                             onClick={() => onDeleteExpense(expense.id)}
-                            className="text-red-500 hover:text-red-700 transition-colors"
+                            className="text-red-500 hover:text-red-700 transition-all duration-200 hover:scale-110 active:scale-95"
                             title="Delete expense"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -147,13 +147,13 @@ function Dashboard({ expenses, loading, onDeleteExpense }) {
 
 function MetricCard({ title, value, subtitle, icon, bgColor, iconColor }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between">
+    <div className="bg-white rounded-lg shadow-sm p-6 flex items-center justify-between hover-lift transition-smooth animate-fadeIn">
       <div>
         <p className="text-gray-600 text-sm mb-1">{title}</p>
         <p className="text-3xl font-bold text-gray-800 mb-1">{value}</p>
         <p className="text-gray-500 text-xs">{subtitle}</p>
       </div>
-      <div className={`${bgColor} rounded-full p-4 ${iconColor}`}>
+      <div className={`${bgColor} rounded-full p-4 ${iconColor} transition-transform duration-300 hover:scale-110`}>
         {icon}
       </div>
     </div>

@@ -46,7 +46,8 @@ function PerPersonSummary({ expenses }) {
         {PEOPLE.map((person, index) => (
           <div
             key={person}
-            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 transition-all duration-200 hover-lift animate-fadeIn"
+            style={{ animationDelay: `${index * 50}ms` }}
           >
             <div className="flex items-center gap-2">
               <div className={`w-3 h-3 rounded-full ${

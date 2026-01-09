@@ -89,9 +89,9 @@ function Login({ onLogin }) {
 
           <button
             type="submit"
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-colors flex items-center justify-center gap-2"
+            className="w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-3 rounded-lg transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl flex items-center justify-center gap-2"
           >
-            <LogIn className="w-5 h-5" />
+            <LogIn className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
             Login
           </button>
         </form>
