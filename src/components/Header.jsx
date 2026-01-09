@@ -1,4 +1,4 @@
-import { Clock, User, LogOut, Plus } from 'lucide-react';
+import { Clock, LogOut, Plus } from 'lucide-react';
 
 function Header({ onAddExpenseClick, onLogout }) {
   return (
@@ -11,28 +11,22 @@ function Header({ onAddExpenseClick, onLogout }) {
             </div>
             <h1 className="text-2xl font-bold text-gray-800">SpendSmart</h1>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-gray-700">
-              <span>Welcome back, Admin</span>
-              <User className="w-5 h-5" />
-            </div>
-            <button 
-              onClick={onLogout}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5 text-gray-600" />
-            </button>
-          </div>
+          <button 
+            onClick={onLogout}
+            className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110 active:scale-95"
+            title="Logout"
+          >
+            <LogOut className="w-5 h-5 text-gray-600" />
+          </button>
         </div>
         <div className="flex justify-end">
-            <button
-              onClick={onAddExpenseClick}
-              className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
-            >
-              <Plus className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" />
-              Add Expense
-            </button>
+          <button
+            onClick={onAddExpenseClick}
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold flex items-center gap-2 transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg hover:shadow-xl"
+          >
+            <Plus className="w-5 h-5 transition-transform duration-300 group-hover:rotate-90" />
+            Add Expense
+          </button>
         </div>
       </div>
     </header>
